@@ -1,99 +1,39 @@
-# ---------------------------------------------------------------------------------------------------------------------
-# DEPLOY A SIMPLE WEB SERVER ON A SINGLE EC2 INSTANCE
-# ---------------------------------------------------------------------------------------------------------------------
-
-provider "aws" {
-  region = "${var.aws_region}"
+provider "google" {
+  project = "${var.gcp_project}"
+  region  = "${var.gcp_region}"
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
-# CREATE THE EC2 INSTANCE
-# It will run a simple "Hello, World" web server
-# ---------------------------------------------------------------------------------------------------------------------
+resource "google_compute_instance" "vm_server" {
+  name         = "dev-spah test VM"
+  machine_type = "f1-micro"
 
-resource "aws_instance" "web_server" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.micro"
+  boot_disk {
+    initialize_params { 
+      image = "debian-cloud/debian-9" 
+    }
+  } 
 
-  key_name               = "${var.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.web_server.id}"]
-
-  # To keep this example simple, we run a web server as a User Data script. In real-world usage, you would typically
-  # install the web server and its dependencies in the AMI.
-  user_data = <<-EOF
+  metadata_startup_script = <<-EOF
               #!/bin/bash
               echo "${var.server_text}" > index.html
               nohup busybox httpd -f -p "${var.http_port}" &
-              EOF
+              EOF  
 
-  tags {
-    Name = "${var.name}"
+  network_interface = { 
+    network = "vpc-network-test" 
   }
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
-# FOR THIS EXAMPLE, WE JUST RUN A PLAIN UBUNTU 16.04 AMI
-# ---------------------------------------------------------------------------------------------------------------------
-
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-
-  filter {
-    name   = "image-type"
-    values = ["machine"]
-  }
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
-  }
+resource "google_compute_network" "this_is_a_test" {
+  name                    = "vpc-test-network"
+  description             = "This is a test network"  
+  auto_create_subnetworks = true
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
-# CREATE A SECURITY GROUP TO CONTROL WHAT TRAFFIC CAN GO IN AND OUT OF THE EC2 INSTANCE
-# ---------------------------------------------------------------------------------------------------------------------
+resource "google_compute_subnetwork" "testsubnet-devspah1" {}
 
-resource "aws_security_group" "web_server" {
-  name = "${var.name}"
-}
+resource "google_compute_subnetwork" "testsubnet-devspah2" {}
 
-resource "aws_security_group_rule" "allow_http_inbound" {
-  type              = "ingress"
-  from_port         = "${var.http_port}"
-  to_port           = "${var.http_port}"
-  protocol          = "tcp"
-  security_group_id = "${aws_security_group.web_server.id}"
-  cidr_blocks       = ["0.0.0.0/0"]
-}
 
-resource "aws_security_group_rule" "allow_ssh_inbound" {
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  security_group_id = "${aws_security_group.web_server.id}"
 
-  # To keep this example simple, we allow SSH requests from any IP. In real-world usage, you should lock this down
-  # to just the IPs of trusted servers (e.g., your office IPs).
-  cidr_blocks = ["0.0.0.0/0"]
-}
 
-resource "aws_security_group_rule" "allow_all_outbound" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  security_group_id = "${aws_security_group.web_server.id}"
-  cidr_blocks       = ["0.0.0.0/0"]
-}
