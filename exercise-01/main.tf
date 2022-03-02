@@ -30,9 +30,18 @@ resource "google_compute_network" "this_is_a_test" {
   auto_create_subnetworks = true
 }
 
-resource "google_compute_subnetwork" "testsubnet-devspah1" {}
+resource "google_compute_subnetwork" "testsubnet-devspah1" {
+  name    = "testsubnet-devspah1"
+  network = google_compute_network.this_is_a_test.id
+  region  = "${var.gcp_region}"
+ 
+}
 
-resource "google_compute_subnetwork" "testsubnet-devspah2" {}
+resource "google_compute_subnetwork" "testsubnet-devspah2" {
+  name    = "testsubnet-devspah2"
+  network = google_compute_network.this_is_a_test.id
+  region  = "${var.gcp_region}"
+}
 
 
 
