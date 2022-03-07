@@ -5,7 +5,7 @@ variable "gcp_project" {
 
 variable "gcp_region" {
   description = "the gcs region to use"
-  default     = "us-central1"
+  default     = "us-central1-c"
 }
 
 variable "name" {
