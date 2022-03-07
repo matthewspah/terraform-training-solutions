@@ -1,6 +1,7 @@
 variable "gcp_project" {
   description = "The GCP project to use for test"
   default     = "unity-ie-sre-isolated-test"
+}
 
 variable "gcp_region" {
   description = "the gcs region to use"

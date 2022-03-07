@@ -1,7 +1,3 @@
-output "public_ip" {
-  value = "${aws_instance.web_server.public_ip}"
-}
-
-output "url" {
-  value = "http://${aws_instance.web_server.public_ip}:${var.http_port}"
+output "vm-name" { 
+ value = "${google_compute_instance.vm_server.name}"
 }
